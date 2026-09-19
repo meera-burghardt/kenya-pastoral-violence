@@ -1,0 +1,60 @@
+---
+title: "CBS Data"
+output: html_document
+date: '2024-12-10'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Rural and Metro Totals by Quarter
+```{r}
+# Create the data frame
+totalsbyq <- data.frame(
+  quarter = c("Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"),
+  metro = c(3575538, 3277365, 5321291, 4999835),
+  rural = c(6158765, 7134395, 7521307, 6909484)
+)
+
+# Convert relevant columns to a matrix (excluding the 'quarter' column) and scale by millions
+totals_matrix <- as.matrix(totalsbyq[, c("metro", "rural")]) / 1e6
+
+# Grouped Bar Plot
+bar_positions <- barplot(t(totals_matrix), 
+                         main = "Rural and Metro Total Services by Quarter",
+                         xlab = "Quarter", 
+                         ylab = "Number of Services (in millions)", 
+                         col = c("darkblue", "lightblue"),
+                         beside = TRUE, 
+                         names.arg = totalsbyq$quarter)
+
+# Add the legend in the top right corner
+legend("topleft", 
+       legend = c("Metro", "Rural"), 
+       fill = c("darkblue", "lightblue"),
+       cex = 1, 
+       bty = "n")  
+
+```
+

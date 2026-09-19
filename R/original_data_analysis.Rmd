@@ -1,0 +1,445 @@
+---
+title: "nunn mcguirk data analysis"
+output: html_document
+date: '2024-01-13'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+For Nunn McGuirk Data Set (called data) subset for Kenya
+```{r}
+NMdata <- data[data$country == "Kenya", ]
+# around 6000 conflicts
+```
+
+For nrt data, subset for conflicts
+```{r}
+nrt <- NRT[NRT$Report_Type == "Conflict", ]
+```
+
+creating a data frame with pastoralism index
+```{r}
+past <- data.frame(longitude = NMdata$x, latitude = NMdata$y, NMdata$EA_ag, NMdata$phytomass, NMdata$year)
+past1 <- distinct(past)
+past2 <- distinct(past)
+write.csv(past2, file = "NMpastoralism_data1.csv")
+```
+
+
+
+```{r}
+table(nrt$year)
+install.packages("RColorBrewer")
+library("RColorBrewer")
+blue_palette <- brewer.pal(9, "Blues")
+
+```
+
+```{r}
+total <- read_csv("TOTAL CONFLICTS.csv")
+library(dplyr)
+library(tidyr)
+
+# Create a new column categorizing designations based on the number of conflicts
+total$conflict_occuring <- ifelse(total$Total > 0, "1+ Conflicts", "0 Conflicts")
+
+specific_desig <- c("Community Conservancy", "Community Nature Reserve", "National Park", "Private Ranch", "National Reserve", "Forest Reserve")
+df_filtered <- total %>%
+  filter(DESIG %in% specific_desig)
+
+# Ensure every DESIG has both conflict categories
+df_for_plot <- df_filtered %>%
+  count(DESIG, conflict_occuring) %>%
+  complete(DESIG, conflict_occuring, fill = list(n = 0)) %>%
+  rename(Count = n)
+
+library(ggplot2)
+library(stringr)
+
+
+ggplot(df_for_plot, aes(y = str_wrap(DESIG, width = 20), x = Count, fill = conflict_occuring)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("1+ Conflicts" = "steelblue", "0 Conflicts" = "lightblue")) +
+  labs(title = "Number of Designations by Conflict Status",
+       y = "Designation",
+       x = "Count",
+       fill = "Conflict Status") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(angle = 0),
+        legend.position = "top")
+
+```
+
+```{r}
+# Sample data (replace this with your actual data)
+data <- matrix(c(824,	710,	140, 12026,	243,	986), nrow = 2, byrow = TRUE)
+colnames(data) <- c("ACLED", "NRT", "UCDP")
+rownames(data) <- c("Conflicts inside PAs", "Conflicts outside PAs")
+
+# Create stacked barplot
+barplot(data, beside = FALSE, col = rainbow(ncol(data)), legend = TRUE)
+```
+
+```{r}
+points$inconservancy <- ifelse(is.na(points$NAME), 0, 1)
+t_test_result <- t.test(NMdata.EA_ag ~ inconservancy, data = points)
+print(t_test_result)
+```
+barplot to plot types of protected areas
+```{r}
+type <- c("Community Conservancy", "Community Nature Reserve", "Forest Reserve", "National Park", "National Reserve", "Private Reserve")
+count <- c(21, 28, 234, 23, 29, 16)
+par(mar = c(5, 6, 4, 2) + 1)
+concount <- data.frame(type, count)
+barplot(concount$count, names.arg = concount$type, horiz=TRUE, las = 1, col = "lightblue", 
+        main = "Types of Protected Areas", xlab = "Count of Each Type", cex.names=0.58, xlim = c(0, 250))
+```
+```{r}
+library(ggplot2)
+
+
+# Creating the data frame
+type <- c("Community Conservancy", "Community Nature Reserve", "Forest Reserve", "National Park", "National Reserve", "Private Reserve")
+count <- c(21, 28, 234, 23, 29, 16)
+concount <- data.frame(type, count)
+
+# Generating rainbow colors
+colors <- rainbow(length(unique(concount$type)))
+
+ggplot(concount, aes(x = reorder(type, count), y = count, fill = type)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Types of Protected Areas",
+       x = "Count of Each Type",
+       y = "") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = rel(0.8)),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none")  # Remove the legend
+```
+
+```{r}
+conPA$DESIG <- factor(conPA$DESIG,
+                                   levels = c("Community Conservancy", "Community Nature Reserve", "Community Wildlife Sanctuary", "Conservancy", "Forest Reserve", "Group Ranch", "Marine National Park", "Marine National Reserve", "National Park", "National Reserve", "National Sanctuary", "Not Reported", "Private Nature Reserve", "Private Protected Area", "Private Ranch", "Ramsar Site, Wetland of International Importance", "Wildlife Sanctuary", "World Heritage Site (natural or mixed)"),
+                                   labels = c("Community Conservancy", "Community Nature Reserve", "Community Wildlife Sanctuary", "Conservancy", "Forest Reserve", "Group Ranch", "Marine National Park", "Marine National Reserve", "National Park", "National Reserve", "National Sanctuary", "Not Reported", "Private Nature Reserve", "Private Protected Area", "Private Ranch", "Ramsar Site, Wetland of International Importance", "Wildlife Sanctuary", "World Heritage Site (natural or mixed)"))
+conPA$DESIG <- factor(conPA$DESIG)
+```
+
+```{r}
+conPA$DESIG <- relevel(conPA$DESIG, ref = "Community Conservancy")
+model <- lm(Total ~ DESIG, data = conPA)
+summary(model)
+```
+```{r}
+# install.packages("xtable")
+library(xtable)
+print(xtable(model), type = "latex") # or type = "latex"
+```
+
+```{r}
+# install.packages("dplyr")
+# library(dplyr)
+# install.packages("lubridate")
+# library(lubridate)
+conflicts_per_year <- acled %>%
+  group_by(year) %>%
+  summarise(number_of_conflicts = n())
+
+conflicts_per_year1 <- ucdp %>%
+  group_by(year) %>%
+  summarise(number_of_conflicts = n())
+
+nrt$year <- year(mdy_hm(nrt$`Reported_At_(GMT+3:0)`))
+conflicts_per_year2 <- nrt %>%
+  group_by(year) %>%
+  summarise(number_of_conflicts = n())
+
+# install.packages("plm")
+# library(plm)
+
+
+```
+
+```{r}
+model <- lm(NRT ~ `precipitation value` + `election year` + (`precipitation value` * `election year`), data = annual_rainfall)
+# conflict ~ rainfall * election year
+# rainfall ~ election year, Rainfall*election year
+summary(model)
+# install.packages("xtable")
+library(xtable)
+print(xtable(model), type = "latex") # or type = "latex"
+```
+```{r}
+# Example of encoding, adjust according to your actual data
+annual_rainfall$index <- as.integer(factor(annual_rainfall$`precipitation index`, levels = c("high", "medium", "low"), ordered = TRUE))
+model <- lm(ACLED ~ `precipitation index` + `election year` + (`precipitation index` * `election year`), data = annual_rainfall)
+summary(model)
+library(xtable)
+print(xtable(model), type = "latex") # or type = "latex"
+```
+
+```{r}
+NDVI$date <- as.Date(NDVI$date, format="%Y-%m-%d")
+NDVI$year <- format(NDVI$date, "%Y")
+NDVI$vim <- as.numeric(as.character(NDVI$vim))
+ndvi_yearly <- NDVI %>%
+  group_by(year) %>%
+  summarise(NDVI_vim = mean(vim, na.rm = TRUE))
+
+table(NDVI$year)
+summary(NDVI$vim)
+
+ndvi_conflict <- merge(annual_rainfall, ndvi_yearly, by = "year", all.x = TRUE)
+
+install.packages("scales")
+
+library(scales)
+
+# Correctly rescale NDVI values to [0, 1]
+ndvi_conflict$NDVI_vim_rescaled <- scales::rescale(ndvi_conflict$NDVI_vim, c(0, 1), na.rm = TRUE)
+
+
+model <- lm(NRT ~ NDVI_vim + `election year` + (NDVI_vim * `election year`), data = ndvi_conflict)
+summary(model)
+library(xtable)
+print(xtable(model), type = "latex") # or type = "latex"
+```
+```{r}
+library(readr)
+area_conflict <- read_csv("~/Desktop/folder/Thesis/attribute table conflicts inside conservancies - Sheet6.csv")
+# Ensure 'conflicts/square km' is numeric
+area_conflict$`conflicts/square km` <- as.numeric(as.character(area_conflict$`conflicts/hectare`))
+area_conflict$designation <- as.factor(area_conflict$DESIG)
+area_conflict$designation <- relevel(area_conflict$designation, ref = "National Sanctuary")
+model <- lm(`conflicts/hectare` ~ designation, data = area_conflict)
+summary(model)
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(stringr) # Ensure stringr is loaded for str_wrap
+
+filtered_data <- area_conflict %>%
+  filter(!designation %in% c("Ramsar Site, Wetland of International Importance", "Wildlife Sanctuary", "World Heritage Site (natural or mixed)", "Marine National Reserve", "National Sanctuary", "Group Ranch"))
+
+average_conflicts <- filtered_data %>%
+  group_by(designation) %>%
+  summarize(Avg_Conflicts_per_sq_km = mean(`conflicts/square km`, na.rm = TRUE),
+            SE = sd(`conflicts/square km`, na.rm = TRUE) / sqrt(n()))  # n() gives the number of observations
+
+# Wrap text for designation labels
+average_conflicts$designation_wrapped <- str_wrap(average_conflicts$designation, width = 20)
+
+# Plotting the averages with standard error bars, using wrapped text for labels and making bars horizontal
+ggplot(average_conflicts, aes(x = designation_wrapped, y = Avg_Conflicts_per_sq_km, fill = designation_wrapped)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  geom_errorbar(aes(ymin = Avg_Conflicts_per_sq_km - SE, ymax = Avg_Conflicts_per_sq_km + SE), width = 0.2) +
+  coord_flip() +  # Flip the coordinates to make the bars horizontal
+  theme_minimal() +
+  labs(title = "Average Conflicts per 100 Square Km by Designation", 
+       y = "Conflicts per 100 Square Km",  # Swap x and y labels after flipping
+       x = "Average Conflicts per 100 Square Km",
+       fill = "Designation") +
+  theme(axis.text.y = element_text(angle = 0))  # Ensure y-axis labels (original x-axis) are horizontal
+
+```
+
+
+pastoralism code
+```{r}
+library(dplyr)
+
+past <- select(NMdata, x, y, year, bs_ag, bs_np, herdXEApXn12)
+library(dplyr)
+
+pastoralism_by_point <- past %>%
+  group_by(x, y) %>%
+  summarize(
+    avg_agriculture = mean(bs_ag, na.rm = TRUE),
+    avg_pastoralism = mean(bs_np, na.rm = TRUE),
+    avg_herder = mean(herdXEApXn12, na.rm = TRUE),
+    .groups = 'drop'
+  )
+# Assuming 'df' is your DataFrame, and you want to save it as 'my_data.csv' in the current working directory
+write.csv(pastoralism_by_point, "pastoralism_by_point.csv")
+```
+
+isolate farmer herder conflicts
+```{r}
+library(dplyr)
+library(stringr)
+
+# Assuming 'conflict_data' is your dataset
+# And you want to check columns 'description1', 'description2', etc.
+
+# Creating a new dataframe with rows containing the keywords in any of the specified columns
+farmer_herder_conflicts <- acled %>%
+  rowwise() %>%  # Apply the filtering function to each row individually
+  filter(str_detect(assoc_actor_1, regex("Pastoralists", ignore_case = TRUE)) |
+         str_detect(assoc_actor_2, regex("Pastoralists", ignore_case = TRUE)) |
+         str_detect(notes, regex("herders|pastoralists", ignore_case = TRUE))) %>%
+  ungroup()  # Remove the row wise grouping
+write.csv(farmer_herder_conflicts, "farmer_herder_conflicts.csv")
+farmerherdertable <- table(farmer_herder_conflicts$year)
+acledtable <- table(acled$year)
+```
+
+```{r}
+farmerherderdf <- as.data.frame(farmerherdertable)
+acleddf <- as.data.frame(acledtable)
+
+merged_df <- merge(farmerherderdf, acleddf, by = c("Var1", "Var1"))
+merged_df$Ratio = with(merged_df, (Freq.x / Freq.y)*100)
+
+library(ggplot2)
+
+ggplot(merged_df, aes(x = Var1, y = Ratio)) + 
+  geom_bar(stat = "identity", fill = "steelblue") +  # Set bars to be steelblue
+  theme_minimal() + 
+  labs(title = "Percentage of Total Recorded Conflicts that Involve Pastoralists",
+       x = "Year", 
+       y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+```{r}
+phytomass_grid <- read_csv("phytomass grid.csv")
+# Perform a t-test
+t_test_result <- t.test(NMdata.phytomass ~ in_protected_area, data = phytomass_grid)
+
+# Print the results
+print(t_test_result)
+
+install.packages("xtable")
+# Example t-test
+t_test_result <- t.test(rnorm(10), rnorm(10))
+# Extracting key components from the t-test result
+summary_df <- data.frame(
+  Statistic = t_test_result$statistic,
+  p_value = t_test_result$p.value,
+  Confidence_Interval_Lower = t_test_result$conf.int[1],
+  Confidence_Interval_Upper = t_test_result$conf.int[2],
+  Estimate_Difference = t_test_result$estimate,
+  Degrees_of_Freedom = t_test_result$parameter
+)
+# Convert the data frame to LaTeX
+latex_table <- xtable(summary_df)
+
+# Print the LaTeX code
+print(latex_table, type = "latex", floating = FALSE)
+
+```
+```{r}
+pastoralismPA <- read_csv("pastoralist violence inside PA.csv")
+pastoralismPA <- pastoralismPA %>% filter(NUMPOINTS > 0)
+library(dplyr)
+
+# Assuming NUMPOINT is the variable of interest and you want the count of non-zero NUMPOINT entries per DESIG
+filtered_data <- pastoralismPA %>%
+  filter(NUMPOINTS > 0) %>%
+  group_by(DESIG) %>%
+  summarise(Count = n(),  # Count of entries for each designation
+            SE = sd(NUMPOINTS) / sqrt(n()), .groups = 'drop')  # Standard error of NUMPOINT
+# Assuming normal distribution, the error margin can be approximated as 1 standard error from the mean
+filtered_data <- filtered_data %>%
+  mutate(Lower = Count - SE, Upper = Count + SE)
+library(ggplot2)
+
+library(ggplot2)
+library(stringr)  # Make sure to load the stringr package for str_wrap
+
+ggplot(filtered_data, aes(x = DESIG, y = Count, fill = DESIG)) +  # Add fill = DESIG here
+  geom_col() +  # Draw bars
+  coord_flip() +  # Make bars horizontal
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 20)) +  # Wrap long labels
+  theme_minimal() +
+  labs(title = "Count of Designations with 1 or More Conflict",
+       x = "Designation of Protected Area",
+       y = "Count") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1),
+        legend.position = "none")  # Keep this if you don't want a legend
+
+
+```
+
+```{r}
+farmerherderrainfall <- merge(farmerherderdf, annual_rainfall, by.x = "Var1", by.y = "year", all.x = TRUE)
+herderrainfall <- lm(`precipitation value` ~ Freq, data = farmerherderrainfall)
+summaryherder <- summary(herderrainfall)
+# Convert the data frame to LaTeX
+latex_table <- xtable(summaryherder)
+
+# Print the LaTeX code
+print(latex_table, type = "latex", floating = FALSE)
+sum(pastoralismPA$NUMPOINTS)
+```
+
+```{r}
+# conflicts per 100sq km for pastoral violence
+  pastoralismPA <- add_row(pastoralismPA, DESIG = "Kenya", `conflicts/100squarekm` = 2.5622)
+
+
+# Assuming pastoralismPA has been properly defined and add_row() has been used as shown
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+conflict_summary <- pastoralismPA %>%
+  group_by(DESIG) %>%
+  summarise(AvgConflict = mean(`conflicts/100squarekm`), .groups = 'drop')  # Summarise conflicts
+
+# Plot
+ggplot(conflict_summary, aes(x = DESIG, y = AvgConflict, fill = DESIG)) +
+  geom_col() +  # Draw the bars
+  coord_flip() +  # Flip the plot to make bars horizontal
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 20)) +  # Wrap long DESIG labels (now x-axis labels due to coord_flip)
+  theme_minimal() +
+  labs(title = "Average Conflicts per 100 sq km by Designation",
+       y = "Average Conflicts per 100 sq km",  # Adjusted label to match flipped axes
+       x = "Designation of Protected Area") +  # Adjusted label to match flipped axes
+  theme(axis.text.x = element_text(angle = 0, hjust = 1),  # Adjust axis.text.x for wrapped labels (it controls the vertical axis labels after coord_flip)
+        legend.position = "none")  # Adjust as needed
+
+
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+totalconflictinsidePA <- read_csv("totalconflictinsidePA.csv")
+
+# Assuming 'conflict_data' is your dataset
+# And you want to check columns 'description1', 'description2', etc.
+protectedareaequals1 <- totalconflictinsidePA[totalconflictinsidePA$in_protected_area == 1, ]
+
+# Creating a new dataframe with rows containing the keywords in any of the specified columns
+protectedareapastoral1 <- protectedareaequals1 %>%
+  rowwise() %>%  # Apply the filtering function to each row individually
+  filter(str_detect(assoc_actor_1, regex("Pastoralists", ignore_case = TRUE)) |
+         str_detect(assoc_actor_2, regex("Pastoralists", ignore_case = TRUE)) |
+         str_detect(notes, regex("herders|pastoralists", ignore_case = TRUE))) %>%
+  ungroup()  # Remove the row wise grouping
+```
+
+```{r}
+library(dplyr)
+rainfallphytomass_averages <- NMdata %>%
+  group_by(x, y) %>%
+  summarise(
+    avg_rainfall = mean(prec_gpcc, na.rm = TRUE),
+    avg_phytomass = mean(phytomass, na.rm = TRUE),
+    .groups = 'drop'  # This drops the grouping structure afterwards
+  )
+write.csv(rainfallphytomass_averages, "rainfallphytomasscells.csv")
+table(NMdata$year)
+```
+
+
+```
+

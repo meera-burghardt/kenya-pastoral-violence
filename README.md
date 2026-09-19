@@ -1,0 +1,95 @@
+# Climate, protected areas, and pastoral conflict in Kenya
+
+A reproducible analysis of how rainfall, vegetation, and protected-area boundaries shape conflict patterns in Kenya, using three conflict datasets (ACLED, UCDP, NRT) and satellite-derived environmental indicators.
+
+Based on the author's undergraduate senior thesis at Princeton University's School of Public and International Affairs (May 2024), rebuilt end-to-end in R with full spatial analysis in `sf`.
+
+![Farmer-herder conflicts and protected areas in Kenya](figures/06_pastoral_conflicts_map.png)
+
+## Key findings
+
+**The standard climate-conflict story does not hold in Kenya.** Across nearly three decades of data, wetter years — not drier ones — are associated with more pastoral conflict. This pattern is consistent with livestock-raiding as the underlying mechanism: wet years produce fatter herds and better raiding conditions, not the resource scarcity that classical models predict.
+
+**The relationship reverses in election years.** Non-election years show a modest positive slope between vegetation greenness (NDVI) and conflict. Election years show the opposite: greener vegetation is associated with sharply fewer conflicts. The interaction is statistically significant (adjusted R² = 0.41, interaction p = 0.016).
+
+**Conflict concentrates in specific protected-area types.** Community Nature Reserves see an average of 21 conflict events each, an order of magnitude more than National Parks (1.4) or Community Conservancies (0.4). Northern Kenya's community conservancies and major forest reserves account for most of the pastoral violence recorded.
+
+![Rainfall and pastoral conflict move together](figures/03_rainfall_pastoral_conflict.png)
+
+## Repository structure
+
+```
+kenya-pastoral-violence/
+├── R/                           # Analytical scripts, run in order
+│   ├── 01_load_spatial_data.R   # Load conflict datasets and WDPA polygons as sf objects
+│   ├── 02_spatial_joins.R       # Count events inside each protected area
+│   ├── 03_regression_analysis.R # Climate-conflict and designation regressions
+│   └── 04_visualisations.R      # Produce figures for this README
+├── data/
+│   ├── raw/                     # Original datasets (some gitignored; see Data sources)
+│   └── processed/               # Derived datasets and analysis outputs
+├── figures/                     # PNG outputs from 04_visualisations.R
+├── docs/
+│   └── thesis.pdf               # Full 107-page thesis with methodology and references
+├── renv.lock                    # Pinned R package versions
+└── kenya-pastoral-violence.Rproj
+```
+
+## How to reproduce
+
+Clone the repo, open `kenya-pastoral-violence.Rproj` in RStudio, and run the scripts in order:
+
+```r
+renv::restore()          # install pinned package versions
+source("R/01_load_spatial_data.R")
+source("R/02_spatial_joins.R")
+source("R/03_regression_analysis.R")
+source("R/04_visualisations.R")
+```
+
+Requires R 4.2+ and the spatial system libraries (GDAL, GEOS, PROJ) that `sf` depends on. On macOS, install these with Homebrew (`brew install gdal geos proj`) before installing `sf`.
+
+Two datasets need to be downloaded separately (see below); the scripts will error with clear messages if they are missing.
+
+## Data sources
+
+| Dataset | Coverage | Source | In repo? |
+|---|---|---|---|
+| ACLED conflict events | Kenya, 1997–2024 | [acleddata.com](https://acleddata.com) | No (registration required, redistribution prohibited) |
+| UCDP Georeferenced Event Dataset | Global, 1989–2023 | [ucdp.uu.se](https://ucdp.uu.se/downloads/) | Yes |
+| NRT (Northern Rangelands Trust) events | Northern Kenya, 2018–Sept 2022 | Private research communication | No |
+| WDPA protected areas | Kenya, January 2024 | [protectedplanet.net](https://protectedplanet.net) | Yes |
+| World Bank precipitation | Kenya, annual | [climateknowledgeportal.worldbank.org](https://climateknowledgeportal.worldbank.org) | Yes |
+| NDVI (MODIS vegetation index) | Kenya, monthly, 2002–2024 | [Humanitarian Data Exchange](https://data.humdata.org) | Yes |
+| McGuirk & Nunn transhumant pastoralism data | Africa, ethnographic grid cells | [Zenodo replication package](https://zenodo.org/records/20767114) | Yes |
+
+**Data availability notes:**
+
+*ACLED* requires free registration but does not permit redistribution. To reproduce this analysis, register at acleddata.com, download Kenya events from 1997 to present, and save to `data/raw/acled_kenya_1997_2024.csv`.
+
+*NRT (Northern Rangelands Trust)* data was obtained through a personal research communication and is not publicly redistributable. The available snapshot (dated September 2022) covers 2018 to mid-2022, which is why NRT time-series regressions are omitted from `03_regression_analysis.R` — five years is too few for annual regression. NRT still contributes to the cross-sectional protected-area analysis, where year coverage is not required. The original thesis used a later NRT export with additional years; the qualitative findings replicate on the available snapshot.
+
+The derived dataset `data/processed/annual_climate_conflict_index.csv` combines yearly precipitation, a categorical drought index (high/medium/low, compiled from news reports and Kenya Meteorological Department bulletins), election-year indicators, and conflict counts across all three datasets. This is an original data product built for the thesis.
+
+## Methodology summary
+
+**Spatial joins** ([`02_spatial_joins.R`](R/02_spatial_joins.R)). Conflict events (points) are joined to WDPA protected areas (polygons) via `st_intersects`, projected to Arc 1960 / UTM zone 37S (EPSG:21037) for accurate area calculation. Multipart polygons sharing a WDPAID are dissolved before joining to avoid double-counting.
+
+**Climate–conflict regressions** ([`03_regression_analysis.R`](R/03_regression_analysis.R)). Annual conflict counts are regressed on precipitation, a categorical drought index, and NDVI, each interacted with an election-year indicator. Sample sizes are small (n = 21–34 years); results should be read as exploratory rather than causal.
+
+**Protected-area designation model.** Conflict counts and area-normalised conflict density are regressed on WDPA designation type, with Community Conservancy as the reference category. The raw-count model has adjusted R² = 0.25 with Community Nature Reserve highly significant; the area-normalised model has near-zero R², indicating that much of the raw-count difference reflects size rather than density.
+
+**Farmer-herder identification.** ACLED events are classified as pastoral if `assoc_actor_1`, `assoc_actor_2`, or the `notes` field matches "pastoralists" or "herders" (case-insensitive). This yields 769 events (6% of Kenyan ACLED events) across 1997–2024.
+
+## Limitations
+
+- **Small annual samples.** Climate-conflict regressions have n = 21 to 34 years. Findings should be treated as exploratory patterns, not identified causal effects.
+- **NRT snapshot coverage.** The available NRT data covers only 2018–September 2022, limiting analyses that depend on full year coverage.
+- **Point geocoding.** Conflict events are recorded at approximate incident locations; some are geocoded to district centroids, which introduces spatial noise into the point-in-polygon joins.
+- **ACLED coverage.** ACLED coverage in Kenya deepened materially after 2015; year-on-year comparisons of raw counts partly reflect improved reporting, not only underlying conflict.
+
+## About
+
+Built by [Meera Burghardt](https://www.linkedin.com/in/meera-burghardt/), MPA candidate in Data Science for Public Policy at the London School of Economics.
+
+The original thesis was supervised by Professor Ethan Kapstein (Princeton School of Public and International Affairs) and presented to Kenyan policymakers, government officials, and protected-area managers in May 2024. The full 107-page thesis, including methodology, literature review, and policy recommendations, is available at [`docs/thesis.pdf`](docs/thesis.pdf).

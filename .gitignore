@@ -1,0 +1,40 @@
+# ============================================================================
+# .gitignore for kenya-pastoral-violence
+# Excludes files that shouldn't be pushed to GitHub for licensing or
+# confidentiality reasons, plus standard R/RStudio scratch files.
+# ============================================================================
+
+# ---- Data that cannot be redistributed ----
+# NRT (Northern Rangelands Trust) — obtained via personal connection,
+# not publicly redistributable
+data/raw/nrt_events_2022.csv
+data/processed/nrt_sf.rds
+
+# ACLED — free to use with registration, but redistribution not permitted
+# per their terms of use (https://acleddata.com/terms-of-use/)
+data/raw/acled_kenya_1997_2024.csv
+data/processed/acled_sf.rds
+
+# ---- Standard R/RStudio exclusions ----
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj.user
+
+# ---- renv ----
+# We commit renv.lock (the dependency spec) but not the actual package cache
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/staging/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# Nunn-McGuirk replication data (227 MB — exceeds GitHub's 100 MB limit)
+# Publicly available at https://zenodo.org/records/20767114
+data/raw/nunn_mcguirk_replication.dta
