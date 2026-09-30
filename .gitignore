@@ -44,3 +44,6 @@ data/processed/qgis_nrt_in_conservancies.csv
 
 # NRT-derived aggregated outputs (conservative exclusion)
 data/processed/qgis_nrt_in_conservancies.csv
+
+# RStudio auto-generated markdown preview
+README.html
