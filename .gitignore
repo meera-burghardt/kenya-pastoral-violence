@@ -41,3 +41,6 @@ data/raw/nunn_mcguirk_replication.dta
 
 # NRT-derived aggregated outputs (conservative exclusion)
 data/processed/qgis_nrt_in_conservancies.csv
+
+# NRT-derived aggregated outputs (conservative exclusion)
+data/processed/qgis_nrt_in_conservancies.csv
