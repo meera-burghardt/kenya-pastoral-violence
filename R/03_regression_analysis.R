@@ -32,7 +32,7 @@ annual <- read_csv(
     precip_value = `precipitation value`,
     election_yr  = `election year`
   ) %>%
-  # Drop 2023 (mostly empty in this file)
+  # Drop years with missing precipitation values (2023 in the current file)
   filter(!is.na(precip_value))
 
 message("  Annual dataset: ", nrow(annual), " years (", min(annual$year), "-", max(annual$year), ")")

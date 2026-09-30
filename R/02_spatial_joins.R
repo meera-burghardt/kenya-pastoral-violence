@@ -57,8 +57,9 @@ message("  Farmer-herder events identified: ", nrow(farmer_herder_sf),
 
 
 # ---- Compute area of each protected area ------------------------------------
-# Must project to metres (KENYA_CRS) before area calculation; WGS84 gives
-# angular units and yields nonsense areas
+# Project to metres (KENYA_CRS) before computing areas. Area calculations
+# on unprojected geographic coordinates return values in square degrees,
+# which are not meaningful for cross-country comparisons.
 
 message("\nComputing protected area geometries in projected CRS...")
 
@@ -181,7 +182,7 @@ message("  ACLED: ", sum(conflicts_by_pa$ACLED))
 message("  UCDP:  ", sum(conflicts_by_pa$UCDP))
 message("  NRT:   ", sum(conflicts_by_pa$NRT))
 
-# Top 5 protected areas by conflict count — sense check the results
+# Top 5 protected areas by total conflict count
 message("\nTop 5 protected areas by total conflicts:")
 top5 <- conflicts_by_pa %>%
   arrange(desc(total_conflicts)) %>%
@@ -189,7 +190,7 @@ top5 <- conflicts_by_pa %>%
   select(NAME, DESIG, total_conflicts, area_sqkm)
 print(top5)
 
-# Conflicts by designation type — this is what your regressions use
+# Mean conflict density by designation type
 message("\nMean conflicts per 100 sq km, by designation:")
 by_desig <- conflicts_by_pa %>%
   filter(!is.na(conflicts_per_100_sqkm), area_sqkm > 0) %>%

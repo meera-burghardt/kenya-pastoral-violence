@@ -61,10 +61,17 @@ message("  UCDP loaded: ", nrow(ucdp_sf), " events (Kenya only)")
 
 message("Loading NRT...")
 
-nrt_raw <- read_csv(
-  here("data", "raw", "nrt_events_2022.csv"),
-  show_col_types = FALSE
-)
+nrt_path <- here("data", "raw", "nrt_events_2022.csv")
+
+if (!file.exists(nrt_path)) {
+  stop(
+    "NRT data file not found at data/raw/nrt_events_2022.csv. ",
+    "NRT data was obtained through a personal research communication and is not ",
+    "publicly redistributable. See README.md 'Data sources' for details."
+  )
+}
+
+nrt_raw <- read_csv(nrt_path, show_col_types = FALSE)
 
 # Filter to conflict-type events only, per thesis methodology
 nrt_conflicts <- nrt_raw %>%

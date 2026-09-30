@@ -38,3 +38,6 @@ Thumbs.db
 # Nunn-McGuirk replication data (227 MB — exceeds GitHub's 100 MB limit)
 # Publicly available at https://zenodo.org/records/20767114
 data/raw/nunn_mcguirk_replication.dta
+
+# NRT-derived aggregated outputs (conservative exclusion)
+data/processed/qgis_nrt_in_conservancies.csv
