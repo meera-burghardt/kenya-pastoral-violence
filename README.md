@@ -8,11 +8,11 @@ Based on my undergraduate senior thesis at Princeton University's School of Publ
 
 ## Key findings
 
-**The conventional climate-conflict hypothesis is not supported by the Kenyan data.** Across nearly three decades of observations, higher annual rainfall is associated with increased pastoral conflict rather than decreased conflict. This pattern is consistent with a livestock-raiding mechanism: wetter conditions support larger and healthier herds, which raises the returns to raiding, rather than triggering resource scarcity of the kind predicted by classical Malthusian models.
+The Kenyan data does not support the conventional climate-conflict hypothesis. Across nearly three decades of observations, higher annual rainfall is associated with increased pastoral conflict rather than decreased conflict. This pattern is consistent with a livestock-raiding mechanism, in which wetter conditions support larger and healthier herds and raise the returns to raiding, rather than the resource scarcity predicted by classical Malthusian models.
 
-**The rainfall-conflict relationship reverses in election years.** In non-election years, higher vegetation greenness (NDVI) is associated with a modest increase in conflict. In election years, the relationship reverses: greener vegetation is associated with substantially fewer conflict events. The interaction is statistically significant at the 5% level (adjusted R² = 0.41, interaction p = 0.016), though the sample is limited to 21 years.
+The rainfall-conflict relationship reverses in election years. In non-election years, higher vegetation greenness (NDVI) is associated with a modest increase in conflict, while in election years the relationship reverses, with greener vegetation associated with substantially fewer conflict events. The interaction is statistically significant at the 5% level (adjusted R² = 0.41, interaction p = 0.016), though the sample is limited to 21 years.
 
-**Conflict is concentrated in specific protected-area designations.** Community Nature Reserves record an average of 21 conflict events each, approximately an order of magnitude more than National Parks (1.4) or Community Conservancies (0.4). Community conservancies and major forest reserves in northern Kenya account for the majority of pastoral violence observed in the data.
+Conflict is concentrated in specific protected-area designations. Community Nature Reserves record an average of 21 conflict events each, approximately an order of magnitude more than National Parks (1.4) or Community Conservancies (0.4). Community conservancies and major forest reserves in northern Kenya account for the majority of pastoral violence observed in the data.
 
 ![Rainfall and pastoral conflict are positively correlated](figures/03_rainfall_pastoral_conflict.png)
 
@@ -75,20 +75,20 @@ The derived dataset `data/processed/annual_climate_conflict_index.csv` combines 
 
 ## Methodology summary
 
-**Spatial joins** ([`02_spatial_joins.R`](R/02_spatial_joins.R)). Conflict events are joined to WDPA protected-area polygons using `st_intersects`, following projection to Arc 1960 / UTM zone 37S (EPSG:21037) for accurate area calculation. Multipart polygons sharing a WDPAID are dissolved prior to the join in order to prevent double-counting.
+**Spatial joins** ([`02_spatial_joins.R`](R/02_spatial_joins.R)): conflict events are joined to WDPA protected-area polygons using `st_intersects`, following projection to Arc 1960 / UTM zone 37S (EPSG:21037) for accurate area calculation. Multipart polygons sharing a WDPAID are dissolved prior to the join in order to prevent double-counting.
 
-**Climate and conflict regressions** ([`03_regression_analysis.R`](R/03_regression_analysis.R)). Annual conflict counts are regressed on continuous precipitation, the categorical precipitation index, and mean NDVI, each specified with an election-year interaction term. Sample sizes range from 21 to 34 years, and the results are best interpreted as exploratory patterns rather than as identified causal effects.
+**Climate and conflict regressions** ([`03_regression_analysis.R`](R/03_regression_analysis.R)): annual conflict counts are regressed on continuous precipitation, the categorical precipitation index, and mean NDVI, each specified with an election-year interaction term. Sample sizes range from 21 to 34 years, and the results are best interpreted as exploratory patterns rather than as identified causal effects.
 
-**Protected-area designation model.** Conflict counts and area-normalised conflict density are each regressed on WDPA designation type, with Community Conservancy as the reference category. The raw-count specification yields an adjusted R² of 0.25, with the Community Nature Reserve coefficient highly significant. The area-normalised specification produces a near-zero R², indicating that much of the raw-count variation reflects differences in protected-area size rather than differences in the intensity of conflict per unit area.
+**Protected-area designation model:** conflict counts and area-normalised conflict density are each regressed on WDPA designation type, with Community Conservancy as the reference category. The raw-count specification yields an adjusted R² of 0.25, with the Community Nature Reserve coefficient highly significant. The area-normalised specification produces a near-zero R², indicating that much of the raw-count variation reflects differences in protected-area size rather than differences in the intensity of conflict per unit area.
 
-**Farmer-herder conflict identification.** ACLED events are classified as pastoral if `assoc_actor_1`, `assoc_actor_2`, or the `notes` field contains the terms "pastoralists" or "herders" (case-insensitive). This procedure identifies 769 events, approximately 6 percent of Kenyan ACLED events recorded between 1997 and 2024.
+**Farmer-herder conflict identification:** ACLED events are classified as pastoral if `assoc_actor_1`, `assoc_actor_2`, or the `notes` field contains the terms "pastoralists" or "herders" (case-insensitive). This procedure identifies 769 events, approximately 6 percent of Kenyan ACLED events recorded between 1997 and 2024.
 
 ## Limitations
 
-- **Limited annual sample sizes.** The climate and conflict regressions rely on 21 to 34 annual observations. The findings should be interpreted as exploratory rather than as identified causal effects.
-- **NRT snapshot coverage.** The available NRT export covers only 2018 through September 2022, which limits any analysis dependent on full time-series coverage.
-- **Point geocoding.** Conflict events are recorded at approximate incident locations, and some are geocoded to district centroids. This introduces spatial noise into the point-in-polygon joins.
-- **Evolving ACLED coverage.** ACLED coverage in Kenya deepened materially after 2015. Year-on-year comparisons of raw event counts partly reflect improvements in reporting rather than changes in underlying conflict alone.
+- **Limited annual sample sizes:** the climate and conflict regressions rely on 21 to 34 annual observations. The findings should be interpreted as exploratory rather than as identified causal effects.
+- **NRT snapshot coverage:** the available NRT export covers only 2018 through September 2022, which limits any analysis dependent on full time-series coverage.
+- **Point geocoding:** conflict events are recorded at approximate incident locations, and some are geocoded to district centroids, which introduces spatial noise into the point-in-polygon joins.
+- **Evolving ACLED coverage:** ACLED coverage in Kenya deepened materially after 2015, so year-on-year comparisons of raw event counts partly reflect improvements in reporting rather than changes in underlying conflict alone.
 
 ## About
 
